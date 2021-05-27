@@ -14,17 +14,29 @@ class OrderController extends Controller
 {
     public function addCart (Request $request)
     {
-
-        $cart = new Cart();
         $userId = $request->user()->id;
         $productId = $request->product_id;
+        $quantity = $request->quantity;
         $price = Product::find($productId)->harga_product;
+        $carts = Cart::where('user_id', $userId)
+                        ->where('product_id', $productId)
+                        ->first();
 
+        // if same product
+        if ($carts != null){
+            $qty = $carts->quantity;
+            $newqty = $qty + ($quantity);
+            Cart::where('user_id', $userId)
+                    ->where('product_id', $productId)
+                    ->update(['quantity' => $newqty]);
+        } else {
+        $cart = new Cart();
         $cart->product_id = $request->product_id;
         $cart->user_id = $userId;
         $cart->price = $price;
-        $cart->quantity = $request->quantity;
+        $cart->quantity = $quantity;
         $cart->save();
+        }
 
         return response (['success' => true]);
     }
@@ -103,7 +115,8 @@ class OrderController extends Controller
     public function history (Request $request)
     {
         $userId = $request->user()->id;
-        $order = Order::where('user_id', $userId)->get();
+        $order = Order::where('user_id', $userId)
+                        ->get();
 
         return response(['all order' => $order]);
 
